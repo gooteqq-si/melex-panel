@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel Kierowcy Melex</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --pri: #2ecc71;
+            --sec: #34495e;
+            --danger: #e74c3c;
+            --txt: #e0e0e0;
+            --acc: #f1c40f;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--txt);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            height: 100%;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .active { display: flex; }
+
+        h2 { text-align: center; color: var(--pri); margin: 0 0 20px 0; }
+
+        /* PRZYCISKI I WYBÓR */
+        .btn {
+            padding: 18px;
+            border-radius: 12px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+            font-size: 18px;
+            transition: opacity 0.2s;
+            text-align: center;
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn:active { opacity: 0.7; }
+        .btn-pri { background: var(--pri); }
+        .btn-sec { background: var(--sec); }
+        .btn-out { background: transparent; border: 2px solid #444; color: white; }
+
+        /* LOGOWANIE PIN */
+        .pin-display {
+            background: #000;
+            padding: 20px;
+            text-align: center;
+            font-size: 30px;
+            letter-spacing: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            height: 40px;
+            color: var(--pri);
+        }
+
+        .pin-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        /* LICZNIK PASAŻERÓW */
+        .pax-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            background: var(--card);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        .pax-num { font-size: 60px; font-weight: bold; color: var(--pri); }
+        .pax-btn { 
+            width: 75px; height: 75px; border-radius: 50%; border: none; 
+            font-size: 35px; color: white; font-weight: bold; cursor: pointer; 
+        }
+
+        /* SUWAK */
+        .slider-wrap {
+            background: #333;
+            height: 70px;
+            border-radius: 35px;
+            position: relative;
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .slider-handle {
+            width: 60px;
+            height: 60px;
+            background: var(--acc);
+            border-radius: 50%;
+            position: absolute;
+            left: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: black;
+            font-weight: bold;
+            z-index: 2;
+        }
+
+        /* FORMULARZ PŁATNOŚCI */
+        .money-field {
+            width: 100%;
+            background: #000;
+            border: 2px solid #444;
+            padding: 15px;
+            font-size: 28px;
+            color: var(--pri);
+            text-align: right;
+            border-radius: 10px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        .total-label { text-align: center; font-size: 14px; color: #888; margin-top: 10px; }
+        .total-amount { text-align: center; font-size: 32px; font-weight: bold; color: white; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div id="scr-login" class="screen active">
+        <h2>ZALOGUJ SIĘ</h2>
+        <select id="driver-select" class="btn btn-out" style="width:100%; margin-bottom:20px; appearance: none;">
+            <option value="TEST|TESTOWY|szkoleniowy">TEST TESTOWY (szkoleniowy)</option>
+        </select>
+        <div class="pin-display" id="pin-dots"></div>
+        <div class="pin-grid">
+            <div class="btn btn-out" onclick="addPin(1)">1</div>
+            <div class="btn btn-out" onclick="addPin(2)">2</div>
+            <div class="btn btn-out" onclick="addPin(3)">3</div>
+            <div class="btn btn-out" onclick="addPin(4)">4</div>
+            <div class="btn btn-out" onclick="addPin(5)">5</div>
+            <div class="btn btn-out" onclick="addPin(6)">6</div>
+            <div class="btn btn-out" onclick="addPin(7)">7</div>
+            <div class="btn btn-out" onclick="addPin(8)">8</div>
+            <div class="btn btn-out" onclick="addPin(9)">9</div>
+            <div class="btn btn-out" onclick="clearPin()">C</div>
+            <div class="btn btn-out" onclick="addPin(0)">0</div>
+            <div class="btn btn-pri" onclick="login()">OK</div>
+        </div>
+    </div>
+
+    <div id="scr-setup" class="screen">
+        <h3 id="welcome-txt" style="text-align:center; color:var(--pri)"></h3>
+        <p style="text-align:center; font-size: 12px;">Wybierz parametry kursu:</p>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+            <button id="src-tel" class="btn btn-out" onclick="setSource('TEL')">TELEFON</button>
+            <button id="src-pos" class="btn btn-out" onclick="setSource('POS')">POSTÓJ</button>
+        </div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+            <button id="type-kurs" class="btn btn-out" onclick="setType('KURS')">KURS</button>
+            <button id="type-wyc" class="btn btn-out" onclick="setType('WYC')">WYCIECZKA</button>
+        </div>
+
+        <button class="btn btn-pri" style="height: 100px; font-size: 22px;" onclick="startTrip()">RUSZAJ W TRASĘ ▶️</button>
+    </div>
+
+    <div id="scr-onroute" class="screen">
+        <h3 id="route-info" style="text-align:center; margin:0; font-size: 14px; color: #888;"></h3>
+        <div class="pax-control">
+            <button class="pax-btn" style="background:var(--danger)" onclick="updatePax(-1)">-</button>
+            <div style="text-align:center">
+                <div style="font-size:12px; color:#888">OSÓB</div>
+                <div class="pax-num" id="current-pax">1</div>
+            </div>
+            <button class="pax-btn" style="background:var(--pri)" onclick="updatePax(1)">+</button>
+        </div>
+        <div id="log-count" style="text-align:center; font-size:12px; color:#555">Zdarzenia: 1</div>
+
+        <div class="slider-wrap" id="slider-area">
+            <div style="color:#888; font-size:12px; z-index:1">PRZESUŃ BY ROZLICZYĆ >>></div>
+            <div class="slider-handle" id="slider-handle">🏁</div>
+        </div>
+    </div>
+
+    <div id="scr-pay" class="screen">
+        <h2>PŁATNOŚĆ</h2>
+        <div style="margin-bottom: 15px;">
+            <label style="font-size: 12px; color: #888;">GOTÓWKA (PLN)</label>
+            <input type="number" class="money-field" id="pay-cash" placeholder="0.00" oninput="sumTotal()">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="font-size: 12px; color: #888;">KARTA / BLIK (PLN)</label>
+            <input type="number" class="money-field" id="pay-blik" placeholder="0.00" oninput="sumTotal()">
+        </div>
+
+        <div class="total-label">ŁĄCZNIE DO ZAPISU:</div>
+        <div class="total-amount"><span id="pay-total">0.00</span> PLN</div>
+
+        <button id="send-btn" class="btn btn-pri" onclick="finishTrip()">WYŚLIJ DO BAZY ✅</button>
+        <button class="btn btn-out" onclick="navigate('scr-onroute')">POWRÓT DO TRASY</button>
+    </div>
+</div>
+
+<script>
+    // --- KONFIGURACJA ---
+    const apiURL = "https://script.google.com/macros/s/AKfycbxV-PBf7FVG-3tHvaN-UHBQrxVs_YrBHgedFYUtFqsVYbFICgTM1piWXmSjhTGtU-Ru/exec"; 
+
+    let currentPin = "";
+    let driver = { imie: "", nazwisko: "", pojazd: "" };
+    let trip = { source: "POS", type: "KURS", pax: 1, log: [] };
+
+    function navigate(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    // --- LOGOWANIE ---
+    function addPin(n) { if(currentPin.length < 4) { currentPin += n; updatePinDots(); } }
+    function clearPin() { currentPin = ""; updatePinDots(); }
+    function updatePinDots() { document.getElementById('pin-dots').innerText = "•".repeat(currentPin.length); }
+
+    function login() {
+        if(currentPin === "1234") {
+            const val = document.getElementById('driver-select').value.split('|');
+            driver.imie = val[0];
+            driver.nazwisko = val[1];
+            driver.pojazd = val[2];
+            document.getElementById('welcome-txt').innerText = "Witaj " + driver.imie + "!";
+            navigate('scr-setup');
+            setSource('POS'); setType('KURS'); // Domyślne
+        } else {
+            alert("Błędny PIN!");
+            clearPin();
+        }
+    }
+
+    // --- USTAWIENIA KURSU ---
+    function setSource(s) {
+        trip.source = s;
+        document.getElementById('src-tel').style.borderColor = s === 'TEL' ? 'var(--pri)' : '#444';
+        document.getElementById('src-pos').style.borderColor = s === 'POS' ? 'var(--pri)' : '#444';
+    }
+    function setType(t) {
+        trip.type = t;
+        document.getElementById('type-kurs').style.borderColor = t === 'KURS' ? 'var(--pri)' : '#444';
+        document.getElementById('type-wyc').style.borderColor = t === 'WYC' ? 'var(--pri)' : '#444';
+    }
+
+    function startTrip() {
+        trip.pax = 1;
+        trip.log = [{ t: new Date().toLocaleTimeString(), a: "START", p: 1 }];
+        document.getElementById('current-pax').innerText = "1";
+        document.getElementById('route-info').innerText = driver.imie + " | " + trip.type + " (" + trip.source + ")";
+        navigate('scr-onroute');
+    }
+
+    // --- W TRASIE ---
+    function updatePax(n) {
+        trip.pax = Math.max(0, trip.pax + n);
+        document.getElementById('current-pax').innerText = trip.pax;
+        trip.log.push({
+            t: new Date().toLocaleTimeString(),
+            a: n > 0 ? "DOSIADKA" : "WYSIADKA",
+            p: trip.pax
+        });
+        document.getElementById('log-count').innerText = "Zdarzenia: " + trip.log.length;
+    }
+
+    // --- PŁATNOŚĆ I WYSYŁKA ---
+    function sumTotal() {
+        const c = parseFloat(document.getElementById('pay-cash').value) || 0;
+        const b = parseFloat(document.getElementById('pay-blik').value) || 0;
+        document.getElementById('pay-total').innerText = (c + b).toFixed(2);
+    }
+
+    async function finishTrip() {
+        const cash = parseFloat(document.getElementById('pay-cash').value) || 0;
+        const blik = parseFloat(document.getElementById('pay-blik').value) || 0;
+        const total = (cash + blik).toFixed(2);
+        const sendBtn = document.getElementById('send-btn');
+
+        const payload = {
+            imie: driver.imie,
+            nazwisko: driver.nazwisko,
+            pojazd: driver.pojazd,
+            type: trip.type,
+            source: trip.source,
+            paxStart: trip.log[0].p,
+            paxMax: Math.max(...trip.log.map(o => o.p)),
+            log: trip.log,
+            cash: cash,
+            blik: blik,
+            total: total
+        };
+
+        sendBtn.innerText = "WYSYŁANIE...";
+        sendBtn.disabled = true;
+
+        try {
+            await fetch(apiURL, {
+                method: "POST",
+                mode: "no-cors", // Ważne przy Google Apps Script
+                body: JSON.stringify(payload)
+            });
+            alert("KURS ZAPISANY!");
+            location.reload();
+        } catch (e) {
+            alert("BŁĄD WYSYŁKI! Sprawdź internet.");
+            sendBtn.innerText = "SPRÓBUJ PONOWNIE";
+            sendBtn.disabled = false;
+        }
+    }
+
+    // --- LOGIKA SUWAKA ---
+    const handle = document.getElementById('slider-handle');
+    const area = document.getElementById('slider-area');
+    let isDragging = false;
+
+    handle.addEventListener('touchstart', () => isDragging = true);
+    handle.addEventListener('touchmove', (e) => {
+        if(!isDragging) return;
+        let rect = area.getBoundingClientRect();
+        let x = e.touches[0].clientX - rect.left - 30;
+        if(x < 5) x = 5;
+        if(x > rect.width - 65) x = rect.width - 65;
+        handle.style.left = x + 'px';
+        if(x > rect.width - 80) {
+            isDragging = false;
+            handle.style.left = '5px';
+            navigate('scr-pay');
+        }
+    });
+    handle.addEventListener('touchend', () => { isDragging = false; handle.style.left = '5px'; });
+
+</script>
+</body>
+</html>
