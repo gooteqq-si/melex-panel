@@ -3,787 +3,315 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panel Kierowcy Melex</title>
+    <title>Panel Kierowcy Melex v1.0</title>
     <style>
+        /* CSS - WYGLĄD SYSTEMU */
         :root {
-            --bg: #121212;
-            --card: #1e1e1e;
-            --pri: #2ecc71;
-            --sec: #34495e;
-            --danger: #e74c3c;
-            --txt: #e0e0e0;
-            --acc: #f1c40f;
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --primary: #007bff;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --text: #333;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--txt);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg); color: var(--text); touch-action: manipulation; }
+        #app { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100vh; background: var(--card); position: relative; overflow-x: hidden; }
 
-        #app {
-            width: 100%;
-            max-width: 450px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        .screen {
-            display: none;
-            flex-direction: column;
-            padding: 20px;
-            height: 100%;
-            box-sizing: border-box;
-            overflow-y: auto;
-        }
-
+        .screen { display: none; padding: 20px; box-sizing: border-box; flex-direction: column; min-height: 100vh; }
         .active { display: flex; }
 
-        h2 { text-align: center; color: var(--pri); margin: 0 0 20px 0; }
+        /* Nagłówek */
+        .header { background: #222; color: white; padding: 15px; display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
 
-        /* PRZYCISKI I WYBÓR */
-        .btn {
-            padding: 18px;
-            border-radius: 12px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 10px;
-            font-size: 18px;
-            transition: opacity 0.2s;
-            text-align: center;
-            color: white;
-            text-decoration: none;
-        }
+        /* Przyciski */
+        .btn { padding: 18px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; color: white; margin: 8px 0; transition: transform 0.1s; }
+        .btn:active { transform: scale(0.98); }
+        .btn-main { background: var(--primary); height: 120px; font-size: 28px; }
+        .btn-sub { background: #6c757d; }
+        .btn-green { background: var(--success); }
+        .btn-red { background: var(--danger); }
+        .btn-yellow { background: var(--warning); color: black; }
 
-        .btn:active { opacity: 0.7; }
-        .btn-pri { background: var(--pri); }
-        .btn-sec { background: var(--sec); }
-        .btn-out { background: transparent; border: 2px solid #444; color: white; }
+        /* Grid dla dashboardu */
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 
-        /* LOGOWANIE PIN */
-        .pin-display {
-            background: #000;
-            padding: 20px;
-            text-align: center;
-            font-size: 30px;
-            letter-spacing: 10px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            height: 40px;
-            color: var(--pri);
-        }
+        /* Formularze */
+        input, select, textarea { padding: 15px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; width: 100%; box-sizing: border-box; }
+        
+        /* Licznik osób */
+        .counter-box { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 20px 0; }
+        .count-val { font-size: 40px; font-weight: bold; min-width: 60px; text-align: center; }
+        .btn-circle { width: 60px; height: 60px; border-radius: 50%; font-size: 24px; }
 
-        .pin-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
+        /* Suwak (Slider) */
+        .slider-container { background: #eee; height: 70px; border-radius: 35px; position: relative; margin: 20px 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .slider-text { position: absolute; font-weight: bold; color: #777; pointer-events: none; }
+        .slider-handle { position: absolute; left: 5px; width: 60px; height: 60px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; z-index: 2; }
 
-        /* LICZNIK PASAŻERÓW */
-        .pax-control {
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            background: var(--card);
-            padding: 25px;
-            border-radius: 15px;
-            margin: 20px 0;
-        }
-        .pax-num { font-size: 60px; font-weight: bold; color: var(--pri); }
-        .pax-btn { 
-            width: 75px; height: 75px; border-radius: 50%; border: none; 
-            font-size: 35px; color: white; font-weight: bold; cursor: pointer; 
-        }
+        /* Specyficzne kolory suwaków */
+        .slide-finish { background: linear-gradient(to right, var(--success), #ddd); }
+        .slide-logout { background: linear-gradient(to right, var(--danger), #ddd); }
 
-        /* SUWAK */
-        .slider-wrap {
-            background: #333;
-            height: 70px;
-            border-radius: 35px;
-            position: relative;
-            margin-top: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .slider-handle {
-            width: 60px;
-            height: 60px;
-            background: var(--acc);
-            border-radius: 50%;
-            position: absolute;
-            left: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: black;
-            font-weight: bold;
-            z-index: 2;
-        }
-
-        /* FORMULARZ PŁATNOŚCI */
-        .money-field {
-            width: 100%;
-            background: #000;
-            border: 2px solid #444;
-            padding: 15px;
-            font-size: 28px;
-            color: var(--pri);
-            text-align: right;
-            border-radius: 10px;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-        }
-        .total-label { text-align: center; font-size: 14px; color: #888; margin-top: 10px; }
-        .total-amount { text-align: center; font-size: 32px; font-weight: bold; color: white; margin-bottom: 20px; }
+        /* Stoper */
+        .timer-display { font-size: 48px; font-weight: bold; text-align: center; font-family: monospace; margin: 20px 0; }
     </style>
 </head>
 <body>
 
 <div id="app">
     <div id="scr-login" class="screen active">
-        <h2>ZALOGUJ SIĘ</h2>
-        <select id="driver-select" class="btn btn-out" style="width:100%; margin-bottom:20px; appearance: none;">
-            <option value="TEST|TESTOWY|szkoleniowy">TEST TESTOWY (szkoleniowy)</option>
+        <h1 style="text-align: center;">WITAJ</h1>
+        <label>Kierowca:</label>
+        <select id="login-driver">
+            <option value="Jan">Jan</option>
+            <option value="Marek">Marek</option>
+            <option value="Anna">Anna</option>
         </select>
-        <div class="pin-display" id="pin-dots"></div>
-        <div class="pin-grid">
-            <div class="btn btn-out" onclick="addPin(1)">1</div>
-            <div class="btn btn-out" onclick="addPin(2)">2</div>
-            <div class="btn btn-out" onclick="addPin(3)">3</div>
-            <div class="btn btn-out" onclick="addPin(4)">4</div>
-            <div class="btn btn-out" onclick="addPin(5)">5</div>
-            <div class="btn btn-out" onclick="addPin(6)">6</div>
-            <div class="btn btn-out" onclick="addPin(7)">7</div>
-            <div class="btn btn-out" onclick="addPin(8)">8</div>
-            <div class="btn btn-out" onclick="addPin(9)">9</div>
-            <div class="btn btn-out" onclick="clearPin()">C</div>
-            <div class="btn btn-out" onclick="addPin(0)">0</div>
-            <div class="btn btn-pri" onclick="login()">OK</div>
-        </div>
-    </div>
-
-    <div id="scr-setup" class="screen">
-        <h3 id="welcome-txt" style="text-align:center; color:var(--pri)"></h3>
-        <p style="text-align:center; font-size: 12px;">Wybierz parametry kursu:</p>
-        
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-            <button id="src-tel" class="btn btn-out" onclick="setSource('TEL')">TELEFON</button>
-            <button id="src-pos" class="btn btn-out" onclick="setSource('POS')">POSTÓJ</button>
-        </div>
-        
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-            <button id="type-kurs" class="btn btn-out" onclick="setType('KURS')">KURS</button>
-            <button id="type-wyc" class="btn btn-out" onclick="setType('WYC')">WYCIECZKA</button>
-        </div>
-
-        <button class="btn btn-pri" style="height: 100px; font-size: 22px;" onclick="startTrip()">RUSZAJ W TRASĘ ▶️</button>
-    </div>
-
-    <div id="scr-onroute" class="screen">
-        <h3 id="route-info" style="text-align:center; margin:0; font-size: 14px; color: #888;"></h3>
-        <div class="pax-control">
-            <button class="pax-btn" style="background:var(--danger)" onclick="updatePax(-1)">-</button>
-            <div style="text-align:center">
-                <div style="font-size:12px; color:#888">OSÓB</div>
-                <div class="pax-num" id="current-pax">1</div>
-            </div>
-            <button class="pax-btn" style="background:var(--pri)" onclick="updatePax(1)">+</button>
-        </div>
-        <div id="log-count" style="text-align:center; font-size:12px; color:#555">Zdarzenia: 1</div>
-
-        <div class="slider-wrap" id="slider-area">
-            <div style="color:#888; font-size:12px; z-index:1">PRZESUŃ BY ROZLICZYĆ >>></div>
-            <div class="slider-handle" id="slider-handle">🏁</div>
-        </div>
-    </div>
-
-    <div id="scr-pay" class="screen">
-        <h2>PŁATNOŚĆ</h2>
-        <div style="margin-bottom: 15px;">
-            <label style="font-size: 12px; color: #888;">GOTÓWKA (PLN)</label>
-            <input type="number" class="money-field" id="pay-cash" placeholder="0.00" oninput="sumTotal()">
-        </div>
-        <div style="margin-bottom: 15px;">
-            <label style="font-size: 12px; color: #888;">KARTA / BLIK (PLN)</label>
-            <input type="number" class="money-field" id="pay-blik" placeholder="0.00" oninput="sumTotal()">
-        </div>
-
-        <div class="total-label">ŁĄCZNIE DO ZAPISU:</div>
-        <div class="total-amount"><span id="pay-total">0.00</span> PLN</div>
-
-        <button id="send-btn" class="btn btn-pri" onclick="finishTrip()">WYŚLIJ DO BAZY ✅</button>
-        <button class="btn btn-out" onclick="navigate('scr-onroute')">POWRÓT DO TRASY</button>
-    </div>
-</div>
-
-<script>
-    // --- KONFIGURACJA ---
-    const apiURL = "https://script.google.com/macros/s/AKfycbxV-PBf7FVG-3tHvaN-UHBQrxVs_YrBHgedFYUtFqsVYbFICgTM1piWXmSjhTGtU-Ru/exec"; 
-
-    let currentPin = "";
-    let driver = { imie: "", nazwisko: "", pojazd: "" };
-    let trip = { source: "POS", type: "KURS", pax: 1, log: [] };
-
-    function navigate(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-    }
-
-    // --- LOGOWANIE ---
-    function addPin(n) { if(currentPin.length < 4) { currentPin += n; updatePinDots(); } }
-    function clearPin() { currentPin = ""; updatePinDots(); }
-    function updatePinDots() { document.getElementById('pin-dots').innerText = "•".repeat(currentPin.length); }
-
-    function login() {
-        if(currentPin === "1234") {
-            const val = document.getElementById('driver-select').value.split('|');
-            driver.imie = val[0];
-            driver.nazwisko = val[1];
-            driver.pojazd = val[2];
-            document.getElementById('welcome-txt').innerText = "Witaj " + driver.imie + "!";
-            navigate('scr-setup');
-            setSource('POS'); setType('KURS'); // Domyślne
-        } else {
-            alert("Błędny PIN!");
-            clearPin();
-        }
-    }
-
-    // --- USTAWIENIA KURSU ---
-    function setSource(s) {
-        trip.source = s;
-        document.getElementById('src-tel').style.borderColor = s === 'TEL' ? 'var(--pri)' : '#444';
-        document.getElementById('src-pos').style.borderColor = s === 'POS' ? 'var(--pri)' : '#444';
-    }
-    function setType(t) {
-        trip.type = t;
-        document.getElementById('type-kurs').style.borderColor = t === 'KURS' ? 'var(--pri)' : '#444';
-        document.getElementById('type-wyc').style.borderColor = t === 'WYC' ? 'var(--pri)' : '#444';
-    }
-
-    function startTrip() {
-        trip.pax = 1;
-        trip.log = [{ t: new Date().toLocaleTimeString(), a: "START", p: 1 }];
-        document.getElementById('current-pax').innerText = "1";
-        document.getElementById('route-info').innerText = driver.imie + " | " + trip.type + " (" + trip.source + ")";
-        navigate('scr-onroute');
-    }
-
-    // --- W TRASIE ---
-    function updatePax(n) {
-        trip.pax = Math.max(0, trip.pax + n);
-        document.getElementById('current-pax').innerText = trip.pax;
-        trip.log.push({
-            t: new Date().toLocaleTimeString(),
-            a: n > 0 ? "DOSIADKA" : "WYSIADKA",
-            p: trip.pax
-        });
-        document.getElementById('log-count').innerText = "Zdarzenia: " + trip.log.length;
-    }
-
-    // --- PŁATNOŚĆ I WYSYŁKA ---
-    function sumTotal() {
-        const c = parseFloat(document.getElementById('pay-cash').value) || 0;
-        const b = parseFloat(document.getElementById('pay-blik').value) || 0;
-        document.getElementById('pay-total').innerText = (c + b).toFixed(2);
-    }
-
-    async function finishTrip() {
-        const cash = parseFloat(document.getElementById('pay-cash').value) || 0;
-        const blik = parseFloat(document.getElementById('pay-blik').value) || 0;
-        const total = (cash + blik).toFixed(2);
-        const sendBtn = document.getElementById('send-btn');
-
-        const payload = {
-            imie: driver.imie,
-            nazwisko: driver.nazwisko,
-            pojazd: driver.pojazd,
-            type: trip.type,
-            source: trip.source,
-            paxStart: trip.log[0].p,
-            paxMax: Math.max(...trip.log.map(o => o.p)),
-            log: trip.log,
-            cash: cash,
-            blik: blik,
-            total: total
-        };
-
-        sendBtn.innerText = "WYSYŁANIE...";
-        sendBtn.disabled = true;
-
-        try {
-            await fetch(apiURL, {
-                method: "POST",
-                mode: "no-cors", // Ważne przy Google Apps Script
-                body: JSON.stringify(payload)
-            });
-            alert("KURS ZAPISANY!");
-            location.reload();
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panel Kierowcy Melex - System Zarządzania</title>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --primary: #2ecc71;
-            --secondary: #34495e;
-            --danger: #e74c3c;
-            --text: #e0e0e0;
-            --accent: #f1c40f;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        #app {
-            width: 100%;
-            max-width: 450px;
-            background-color: var(--bg-color);
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            border-left: 1px solid #333;
-            border-right: 1px solid #333;
-        }
-
-        .screen {
-            display: none;
-            flex-direction: column;
-            padding: 20px;
-            height: 100%;
-            box-sizing: border-box;
-            overflow-y: auto;
-        }
-
-        .active { display: flex; }
-
-        h2 { text-align: center; color: var(--primary); margin: 0 0 20px 0; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* --- LOGOWANIE PIN --- */
-        .pin-display {
-            background: #000;
-            padding: 15px;
-            text-align: center;
-            font-size: 32px;
-            letter-spacing: 12px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            height: 40px;
-            color: var(--primary);
-            border: 1px solid #333;
-        }
-
-        .pin-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-
-        .pin-btn {
-            background: var(--card-bg);
-            border: 1px solid #444;
-            color: white;
-            padding: 22px;
-            font-size: 24px;
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: background 0.1s;
-        }
-
-        .pin-btn:active { background: #333; }
-
-        /* --- PRZYCISKI I FORMULARZE --- */
-        .btn {
-            padding: 18px;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 12px;
-            text-align: center;
-            text-decoration: none;
-        }
-
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: var(--secondary); color: white; }
-        .btn-outline { background: transparent; border: 2px solid #444; color: white; }
-
-        .btn:active { opacity: 0.8; }
-
-        .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .choice-btn {
-            padding: 15px;
-            background: var(--card-bg);
-            border: 2px solid #444;
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-        }
-        .choice-btn.selected { border-color: var(--primary); background: #1b4d2e; }
-
-        /* --- KONTROLA PASAŻERÓW --- */
-        .pax-control {
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 20px;
-            margin: 20px 0;
-            border: 1px solid #333;
-        }
-        .pax-num { font-size: 64px; font-weight: bold; color: var(--primary); }
-        .pax-btn { 
-            width: 75px; height: 75px; border-radius: 50%; border: none; 
-            font-size: 36px; font-weight: bold; color: white; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        /* --- SUWAK ZAKOŃCZENIA --- */
-        .slider-wrap {
-            background: #222;
-            height: 70px;
-            border-radius: 35px;
-            position: relative;
-            margin-top: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border: 1px solid #444;
-        }
-        .slider-text { color: #777; font-size: 14px; pointer-events: none; z-index: 1; font-weight: bold; }
-        .slider-handle {
-            width: 60px;
-            height: 60px;
-            background: var(--accent);
-            border-radius: 50%;
-            position: absolute;
-            left: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: black;
-            font-weight: bold;
-            z-index: 2;
-            cursor: pointer;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
-        }
-
-        /* --- ROZLICZENIE I SUMA --- */
-        .money-field {
-            width: 100%;
-            background: #000;
-            border: 2px solid #444;
-            padding: 18px;
-            font-size: 32px;
-            color: var(--primary);
-            text-align: right;
-            border-radius: 12px;
-            box-sizing: border-box;
-            margin-bottom: 15px;
-        }
-        .total-box {
-            background: var(--secondary);
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            font-size: 26px;
-            margin-bottom: 20px;
-            border: 2px solid var(--primary);
-        }
-
-        #offline-tag { background: var(--accent); color: black; font-size: 12px; text-align: center; padding: 5px; display: none; font-weight: bold; }
-    </style>
-</head>
-<body>
-
-<div id="app">
-    <div id="offline-tag">POŁĄCZENIE UTRACONE - DANE ZOSTANĄ ZAPISANE LOKALNIE</div>
-
-    <div id="scr-login" class="screen active">
-        <h2 style="margin-top: 20px;">SYSTEM MELEX</h2>
-        <div style="margin-bottom: 10px; color: #888;">Wybierz profil:</div>
-        <select id="driver-name" class="btn btn-outline" style="width: 100%; appearance: none;">
-            <option>Jan Kowalski</option>
-            <option>Piotr Nowak</option>
-            <option>Anna Kwiatkowska</option>
-            <option>Marek Wiśniewski</option>
+        <label>Pojazd:</label>
+        <select id="login-vehicle">
+            <option value="Delfin 01">Delfin 01</option>
+            <option value="Delfin 02">Delfin 02</option>
+            <option value="Rekin 05">Rekin 05</option>
         </select>
-        <div class="pin-display" id="pin-dots"></div>
-        <div class="pin-grid">
-            <div class="pin-btn" onclick="addPin(1)">1</div>
-            <div class="pin-btn" onclick="addPin(2)">2</div>
-            <div class="pin-btn" onclick="addPin(3)">3</div>
-            <div class="pin-btn" onclick="addPin(4)">4</div>
-            <div class="pin-btn" onclick="addPin(5)">5</div>
-            <div class="pin-btn" onclick="addPin(6)">6</div>
-            <div class="pin-btn" onclick="addPin(7)">7</div>
-            <div class="pin-btn" onclick="addPin(8)">8</div>
-            <div class="pin-btn" onclick="addPin(9)">9</div>
-            <div class="pin-btn" onclick="clearPin()" style="color: var(--danger)">C</div>
-            <div class="pin-btn" onclick="addPin(0)">0</div>
-            <div class="pin-btn" onclick="login()" style="background: var(--primary); border: none;">OK</div>
-        </div>
+        <input type="password" id="login-pin" placeholder="KOD PIN (4 cyfry)" inputmode="numeric">
+        <button class="btn btn-green" onclick="app.login()">ZALOGUJ</button>
     </div>
 
     <div id="scr-dash" class="screen">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <span id="user-display" style="font-weight: bold; font-size: 18px;">👤 Kierowca</span>
-            <span style="color: var(--primary);">● Aktywny</span>
+        <div class="header">
+            <span id="dash-user">👤 Kierowca</span>
+            <span id="dash-veh">🛺 Pojazd</span>
         </div>
-        <button class="btn btn-primary" style="height: 160px; font-size: 26px;" onclick="navigate('scr-setup')">▶️ NOWY KURS</button>
-        <button class="btn btn-secondary" onclick="alert('Historia dzisiejszych kursów zostanie pobrana z bazy...')">📊 DZISIEJSZE KURSY</button>
-        <button class="btn btn-outline" style="margin-top: auto;" onclick="logout()">🚪 WYLOGUJ</button>
+        <button class="btn btn-main" onclick="app.nav('scr-start')">🚀 START</button>
+        <button class="btn btn-sub" onclick="app.nav('scr-transfer')">📲 WYŚLIJ KURS</button>
+        <div class="grid-3">
+            <button class="btn btn-sub" onclick="app.nav('scr-info')">ℹ️ INFO</button>
+            <button class="btn btn-red" onclick="app.nav('scr-fault')">🛠️ AW</button>
+            <button class="btn btn-red" onclick="app.nav('scr-logout')">🚪 WYLOG</button>
+        </div>
     </div>
 
-    <div id="scr-setup" class="screen">
-        <h2>USTAWIENIA</h2>
-        <div style="color: #888; margin-bottom: 10px;">SKĄD KLIENT?</div>
-        <div class="choice-grid">
-            <div id="src-tel" class="choice-btn selected" onclick="setSource('TEL')">📞 TELEFON</div>
-            <div id="src-pos" class="choice-btn" onclick="setSource('POS')">🛑 POSTÓJ</div>
-        </div>
-        <div style="color: #888; margin-bottom: 10px;">RODZAJ USŁUGI:</div>
-        <div class="choice-grid">
-            <div id="type-kurs" class="choice-btn selected" onclick="setType('KURS')">KURS</div>
-            <div id="type-wyc" class="choice-btn" onclick="setType('WYC')">WYCIECZKA</div>
-        </div>
+    <div id="scr-start" class="screen">
+        <h2>NOWY KURS</h2>
+        <select id="trip-type" onchange="app.toggleTour(this.value)">
+            <option value="KURS">KURS STANDARDOWY</option>
+            <option value="WYCIECZKA">WYCIECZKA</option>
+        </select>
         
-        <div id="wyc-options" style="display: none; background: #222; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-            <div style="color: #888; margin-bottom: 10px; font-size: 12px;">PUNKTY PROGRAMU:</div>
-            <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
-                <div class="choice-btn trip-opt" onclick="this.classList.toggle('selected')">Objazd Miasta</div>
-                <div class="choice-btn trip-opt" onclick="this.classList.toggle('selected')">Wielbłądzi Garb</div>
-                <div class="choice-btn trip-opt" onclick="this.classList.toggle('selected')">Góra Pirata</div>
-                <div class="choice-btn trip-opt" onclick="this.classList.toggle('selected')">Przekop Mierzei</div>
-            </div>
+        <div id="tour-section" style="display:none; border: 1px dashed #ccc; padding: 10px;">
+            <label><input type="checkbox" value="Objazd"> Objazd Miasta</label><br>
+            <label><input type="checkbox" value="Przekop"> Przekop Mierzei</label><br>
+            <label><input type="checkbox" value="Piaski"> Piaski</label>
         </div>
 
-        <button class="btn btn-primary" style="margin-top: auto;" onclick="startTrip()">ROZPOCZNIJ PRZEJAZD ▶️</button>
-        <button class="btn btn-outline" onclick="navigate('scr-dash')">ANULUJ</button>
+        <div class="counter-box">
+            <button class="btn btn-sub btn-circle" onclick="app.adjPeople(-1)">-</button>
+            <span id="trip-people" class="count-val">0</span>
+            <button class="btn btn-sub btn-circle" onclick="app.adjPeople(1)">+</button>
+        </div>
+        
+        <button id="btn-go" class="btn btn-green" onclick="app.startTrip()" disabled>>>> RUSZAJ! >>></button>
+        <button class="btn btn-sub" onclick="app.nav('scr-dash')">ANULUJ</button>
     </div>
 
-    <div id="scr-onroute" class="screen">
-        <div style="text-align: center; color: var(--primary); font-weight: bold;">KURS TRWA...</div>
-        <div class="pax-control">
-            <button class="pax-btn" style="background: var(--danger);" onclick="updatePax(-1)">➖</button>
-            <div style="text-align: center;">
-                <div style="font-size: 12px; color: #888; text-transform: uppercase;">Osoby</div>
-                <div class="pax-num" id="current-pax">1</div>
-            </div>
-            <button class="pax-btn" style="background: var(--primary);" onclick="updatePax(1)">➕</button>
+    <div id="scr-trip" class="screen">
+        <div class="timer-display" id="trip-timer">00:00:00</div>
+        <div class="counter-box">
+            <span style="font-size: 20px;">W pojeździe: </span>
+            <span id="on-trip-people" class="count-val">0</span>
         </div>
+        <button class="btn btn-sub" onclick="app.adjPeople(1, true)">👤 DOSIADKA</button>
+        <button class="btn btn-yellow" id="btn-pause" onclick="app.togglePause()">🛑 START POSTÓJ</button>
         
-        <div id="route-log" style="background: #222; padding: 15px; border-radius: 12px; font-size: 13px; color: #aaa; min-height: 100px;">
-            Ostatnia aktywność: Start kursu
-        </div>
-
-        <div class="slider-wrap" id="slider-area">
-            <div class="slider-text">PRZESUŃ ABY ZAKOŃCZYĆ 🏁</div>
-            <div class="slider-handle" id="slider-handle">>>></div>
+        <div class="slider-container slide-finish">
+            <div class="slider-text">PRZESUŃ BY ROZLICZYĆ 🏁</div>
+            <div id="finish-handle" class="slider-handle">>>></div>
         </div>
     </div>
 
     <div id="scr-pay" class="screen">
         <h2>ROZLICZENIE</h2>
-        <div style="margin-bottom: 20px;">
-            <div style="color: #888; font-size: 12px; margin-bottom: 5px;">KWOTA GOTÓWKA:</div>
-            <input type="number" class="money-field" id="pay-cash" placeholder="0.00" oninput="calcTotal()">
-            
-            <div style="color: #888; font-size: 12px; margin: 15px 0 5px 0;">KWOTA BLIK / KARTA:</div>
-            <input type="number" class="money-field" id="pay-blik" placeholder="0.00" oninput="calcTotal()">
+        <div style="font-size: 20px; margin-bottom: 20px;">
+            Czas: <span id="final-time">--</span><br>
+            Osób (max): <span id="final-people">--</span>
         </div>
-
-        <div class="total-box">
-            SUMA: <span id="pay-total" style="font-weight: bold;">0.00</span> PLN
-        </div>
-
-        <button class="btn btn-primary" style="font-size: 22px; padding: 25px;" onclick="confirmFinal()">ZAPISZ KURS ✅</button>
-        <button class="btn btn-outline" onclick="navigate('scr-onroute')">POWRÓT DO TRASY</button>
+        <label>Gotówka (PLN):</label>
+        <input type="number" id="pay-cash" value="0" oninput="app.calcSum()">
+        <label>Blik/Terminal (PLN):</label>
+        <input type="number" id="pay-blik" value="0" oninput="app.calcSum()">
+        <h1 style="text-align: center; color: var(--success);">SUMA: <span id="pay-total">0</span> PLN</h1>
+        <button class="btn btn-green" onclick="app.finishTrip()">✅ ZATWIERDŹ I ZAMKNIJ</button>
+        <button class="btn btn-sub" onclick="app.nav('scr-trip')">POWRÓT</button>
     </div>
 
-    <div id="scr-final" class="screen" style="background: rgba(0,0,0,0.95); position: absolute; top:0; left:0; width:100%; z-index: 1000; text-align: center;">
-        <h2 style="margin-top: 40px;">POTWIERDZENIE</h2>
-        <div id="summary-view" style="background: #222; padding: 25px; border-radius: 15px; margin: 20px 0; line-height: 1.8; text-align: left; border: 1px solid #444;">
-            </div>
-        <button class="btn btn-primary" style="width: 100%;" onclick="sendToCloud()">WSZYSTKO SIĘ ZGADZA - WYŚLIJ</button>
-        <button class="btn btn-outline" style="width: 100%;" onclick="navigate('scr-pay')">POPRAW KWOTY</button>
+    <div id="scr-logout" class="screen">
+        <h2>STATUS PRACY</h2>
+        <div class="slider-container" style="background: #fff3cd;">
+            <div class="slider-text">PRZESUŃ: PRZERWA 🟡</div>
+            <div id="pause-handle" class="slider-handle">>>></div>
+        </div>
+        
+        <div class="slider-container slide-logout">
+            <div class="slider-text">PRZESUŃ: KONIEC PRACY 🔴</div>
+            <div id="logout-handle" class="slider-handle">>>></div>
+        </div>
+        <button class="btn btn-sub" onclick="app.nav('scr-dash')">POWRÓT</button>
     </div>
-
 </div>
 
 <script>
-    // --- STAN APLIKACJI ---
-    let currentPin = "";
-    let tripData = {
-        driver: "",
-        source: "TEL",
-        type: "KURS",
-        pax: 1,
-        history: [], // Rejestr zdarzeń: dosiadka/wysiadka
-        cash: 0,
-        blik: 0
+    /* JAVASCRIPT - LOGIKA SYSTEMU */
+    const SCRIPT_URL = '
+https://script.google.com/macros/s/AKfycbzoDFnFmYowCTmTF177ePbvmKsyTIL5CbfjGwypjYPVVJNWi2LIZfHom0mrNPUdM5r5/exec'; // LINK Z GOOGLE APPS SCRIPT
+
+    const app = {
+        state: {
+            driver: '',
+            vehicle: '',
+            people: 0,
+            maxPeople: 0,
+            startTime: null,
+            timerInterval: null,
+            paused: false,
+            elapsed: 0
+        },
+
+        nav(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            window.scrollTo(0,0);
+        },
+
+        login() {
+            this.state.driver = document.getElementById('login-driver').value;
+            this.state.vehicle = document.getElementById('login-vehicle').value;
+            document.getElementById('dash-user').innerText = "👤 " + this.state.driver;
+            document.getElementById('dash-veh').innerText = "🛺 " + this.state.vehicle;
+            this.send('LOGIN', { kierowca: this.state.driver, pojazd: this.state.vehicle });
+            this.nav('scr-dash');
+        },
+
+        adjPeople(val, onTrip = false) {
+            this.state.people = Math.max(0, this.state.people + val);
+            if(this.state.people > this.state.maxPeople) this.state.maxPeople = this.state.people;
+            
+            document.getElementById('trip-people').innerText = this.state.people;
+            document.getElementById('on-trip-people').innerText = this.state.people;
+            document.getElementById('btn-go').disabled = (this.state.people === 0);
+        },
+
+        toggleTour(val) {
+            document.getElementById('tour-section').style.display = (val === 'WYCIECZKA') ? 'block' : 'none';
+        },
+
+        startTrip() {
+            this.state.startTime = new Date();
+            this.state.maxPeople = this.state.people;
+            this.startTimer();
+            const type = document.getElementById('trip-type').value;
+            this.send('START_KURS', { 
+                kierowca: this.state.driver, 
+                pojazd: this.state.vehicle, 
+                typ: type, 
+                osoby: this.state.people,
+                gps: "Pobieranie..." 
+            });
+            this.nav('scr-trip');
+        },
+
+        startTimer() {
+            clearInterval(this.state.timerInterval);
+            this.state.elapsed = 0;
+            this.state.timerInterval = setInterval(() => {
+                if(!this.state.paused) {
+                    this.state.elapsed++;
+                    const hrs = Math.floor(this.state.elapsed / 3600).toString().padStart(2, '0');
+                    const mins = Math.floor((this.state.elapsed % 3600) / 60).toString().padStart(2, '0');
+                    const secs = (this.state.elapsed % 60).toString().padStart(2, '0');
+                    document.getElementById('trip-timer').innerText = `${hrs}:${mins}:${secs}`;
+                }
+            }, 1000);
+        },
+
+        togglePause() {
+            this.state.paused = !this.state.paused;
+            document.getElementById('btn-pause').innerText = this.state.paused ? "▶️ WZNÓW KURS" : "🛑 START POSTÓJ";
+            document.getElementById('btn-pause').style.background = this.state.paused ? "var(--primary)" : "var(--warning)";
+        },
+
+        calcSum() {
+            const cash = parseFloat(document.getElementById('pay-cash').value) || 0;
+            const blik = parseFloat(document.getElementById('pay-blik').value) || 0;
+            document.getElementById('pay-total').innerText = (cash + blik).toFixed(2);
+        },
+
+        finishTrip() {
+            const cash = document.getElementById('pay-cash').value;
+            const blik = document.getElementById('pay-blik').value;
+            this.send('KONIEC_KURS', {
+                kierowca: this.state.driver,
+                gotowka: cash,
+                blik: blik,
+                gps: "Zakończono"
+            });
+            clearInterval(this.state.timerInterval);
+            this.state.people = 0;
+            this.adjPeople(0);
+            this.nav('scr-dash');
+        },
+
+        send(action, payload) {
+            payload.action = action;
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(payload)
+            }).catch(e => console.log("Błąd bazy (prawdopodobnie brak połączenia)"));
+        }
     };
 
-    // --- NAWIGACJA ---
-    function navigate(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        // Autozapis stanu do LocalStorage (na wypadek restartu)
-        localStorage.setItem('melex_last_screen', id);
-        localStorage.setItem('melex_trip_data', JSON.stringify(tripData));
-    }
+    /* LOGIKA SUWAKÓV (SLIDERS) */
+    function initSlider(id, callback) {
+        const handle = document.getElementById(id);
+        const container = handle.parentElement;
+        let isDragging = false;
 
-    // --- LOGOWANIE ---
-    function addPin(n) { if(currentPin.length < 4) { currentPin += n; updatePinDots(); } }
-    function clearPin() { currentPin = ""; updatePinDots(); }
-    function updatePinDots() { document.getElementById('pin-dots').innerText = "•".repeat(currentPin.length); }
-    
-    function login() {
-        // Domyślny PIN to 1234
-        if(currentPin === "1234" || currentPin === "0000") {
-            tripData.driver = document.getElementById('driver-name').value;
-            document.getElementById('user-display').innerText = "👤 " + tripData.driver;
-            navigate('scr-dash');
-        } else {
-            alert("BŁĘDNY PIN!");
-            clearPin();
-        }
-    }
-
-    function logout() {
-        if(confirm("Czy na pewno chcesz się wylogować?")) {
-            localStorage.clear();
-            location.reload();
-        }
-    }
-
-    // --- SETUP ---
-    function setSource(s) {
-        tripData.source = s;
-        document.getElementById('src-tel').classList.toggle('selected', s === 'TEL');
-        document.getElementById('src-pos').classList.toggle('selected', s === 'POS');
-    }
-
-    function setType(t) {
-        tripData.type = t;
-        document.getElementById('type-kurs').classList.toggle('selected', t === 'KURS');
-        document.getElementById('type-wyc').classList.toggle('selected', t === 'WYC');
-        document.getElementById('wyc-options').style.display = (t === 'WYC') ? 'block' : 'none';
-    }
-
-    function startTrip() {
-        tripData.pax = 1;
-        tripData.history = [{ t: new Date().toLocaleTimeString(), a: "START", p: 1 }];
-        document.getElementById('current-pax').innerText = "1";
-        document.getElementById('route-log').innerText = "Godz: " + tripData.history[0].t + " | Rozpoczęto kurs (1 os.)";
-        navigate('scr-onroute');
-    }
-
-    // --- TRASA (DOSIADKA / WYSIADKA) ---
-    function updatePax(n) {
-        tripData.pax = Math.max(0, tripData.pax + n);
-        document.getElementById('current-pax').innerText = tripData.pax;
-        
-        const action = n > 0 ? "DOSIADKA" : "WYSIADKA";
-        const time = new Date().toLocaleTimeString();
-        tripData.history.push({ t: time, a: action, p: tripData.pax });
-        
-        document.getElementById('route-log').innerText = "Godz: " + time + " | " + action + " (Aktualnie: " + tripData.pax + ")";
-    }
-
-    // --- PŁATNOŚĆ ---
-    function calcTotal() {
-        const cash = parseFloat(document.getElementById('pay-cash').value) || 0;
-        const blik = parseFloat(document.getElementById('pay-blik').value) || 0;
-        document.getElementById('pay-total').innerText = (cash + blik).toFixed(2);
-    }
-
-    function confirmFinal() {
-        tripData.cash = document.getElementById('pay-cash').value || 0;
-        tripData.blik = document.getElementById('pay-blik').value || 0;
-        const total = document.getElementById('pay-total').innerText;
-
-        let tourDetails = "";
-        if(tripData.type === 'WYC') {
-            const selected = Array.from(document.querySelectorAll('.trip-opt.selected')).map(e => e.innerText);
-            tourDetails = `<br><strong>PUNKTY:</strong> ${selected.join(", ") || "Brak"}`;
-        }
-
-        document.getElementById('summary-view').innerHTML = `
-            <strong>KIEROWCA:</strong> ${tripData.driver}<br>
-            <strong>TYP:</strong> ${tripData.type} (${tripData.source})${tourDetails}<br>
-            <strong>HISTORIA OSÓB:</strong> ${tripData.history.length} zmian<br>
-            <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
-            <span style="color:var(--primary)">GOTÓWKA: ${tripData.cash} PLN</span><br>
-            <span style="color:var(--primary)">BLIK/KARTA: ${tripData.blik} PLN</span><br>
-            <strong style="font-size: 20px;">SUMA: ${total} PLN</strong>
-        `;
-        navigate('scr-final');
-    }
-
-    function sendToCloud() {
-        // Tu programista podepnie Google Apps Script API
-        alert("DANE ZOSTAŁY ZAPISANE W BAZIE!");
-        // Reset i powrót
-        document.getElementById('pay-cash').value = "";
-        document.getElementById('pay-blik').value = "";
-        document.getElementById('pay-total').innerText = "0.00";
-        navigate('scr-dash');
-    }
-
-    // --- OBSŁUGA SUWAKA ---
-    const handle = document.getElementById('slider-handle');
-    const area = document.getElementById('slider-area');
-    let isDragging = false;
-
-    handle.addEventListener('touchstart', (e) => { isDragging = true; e.preventDefault(); });
-    handle.addEventListener('touchmove', (e) => {
-        if(!isDragging) return;
-        let rect = area.getBoundingClientRect();
-        let x = e.touches[0].clientX - rect.left - 30;
-        if(x < 5) x = 5;
-        if(x > rect.width - 65) x = rect.width - 65;
-        handle.style.left = x + 'px';
-        if(x > rect.width - 80) {
+        handle.addEventListener('touchstart', (e) => isDragging = true);
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            let x = e.touches[0].clientX - container.getBoundingClientRect().left - 30;
+            x = Math.max(0, Math.min(x, container.offsetWidth - 65));
+            handle.style.left = x + 'px';
+            
+            if (x > container.offsetWidth - 80) {
+                isDragging = false;
+                handle.style.left = '5px';
+                callback();
+            }
+        });
+        window.addEventListener('touchend', () => {
             isDragging = false;
             handle.style.left = '5px';
-            navigate('scr-pay');
-        }
-    });
-    handle.addEventListener('touchend', () => { isDragging = false; handle.style.left = '5px'; });
+        });
+    }
 
-    // --- OBSŁUGA OFFLINE ---
-    window.addEventListener('offline', () => document.getElementById('offline-tag').style.display = 'block');
-    window.addEventListener('online', () => document.getElementById('offline-tag').style.display = 'none');
+    initSlider('finish-handle', () => {
+        document.getElementById('final-time').innerText = document.getElementById('trip-timer').innerText;
+        document.getElementById('final-people').innerText = app.state.maxPeople;
+        app.nav('scr-pay');
+    });
+
+    initSlider('logout-handle', () => {
+        location.reload(); // Proste wylogowanie przez przeładowanie
+    });
+
+    initSlider('pause-handle', () => {
+        alert("Rozpoczęto przerwę!");
+        app.send('PRZERWA', { kierowca: app.state.driver, typ_przerwy: 'START', gps: 'Baza' });
+    });
 </script>
 
 </body>
 </html>
-
